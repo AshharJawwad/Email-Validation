@@ -1,5 +1,6 @@
 import { User } from "../models/usermodel.js";
 import bcryptjs from "bcryptjs";
+import { generateTokenAndSetCookie } from "../utils/genTokenAndSetCookie.js";
 
 export const signup = async (req, res) => {
   const { email, password, name } = req.body;
@@ -30,6 +31,19 @@ export const signup = async (req, res) => {
     });
 
     await user.save();
+
+    generateTokenAndSetCookie(res, user._id);
+
+    await sendVerificationEmail(user.email, verificationToken);
+
+    res.status(201).json({
+      success: true,
+      message: "User created Successfully",
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+    });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }
